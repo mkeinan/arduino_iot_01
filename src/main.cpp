@@ -20,7 +20,7 @@
 #define BLUETOOTH_TX 11
 
 // Bluetooth software object
-SoftwareSerial BT(BLUETOOTH_RX, BLUETOOTH_TX);
+SoftwareSerial BT(BLUETOOTH_TX, BLUETOOTH_RX);
 // BT input char:
 char received_chr; // stores incoming character from other device
 
