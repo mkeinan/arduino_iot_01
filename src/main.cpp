@@ -14,6 +14,8 @@
 #define TURN_LEFT 'a'
 #define TURN_RIGHT 'd'
 #define GO_TO_BLACK_LINE 'g'
+#define DEG_90_RIGHT 'e'
+#define DEG_90_LEFT 'q'
 
 // Bluetooth pins
 // #define LED_BUILTIN 13
@@ -22,7 +24,7 @@
 
 const int IR_SENSOR_LEFT = A1;
 const int IR_SENSOR_RIGHT = A0;
-const int IR_THRESHOLD = 850;  // Totally ampirical value => might have to change
+const int IR_THRESHOLD = 650;  // Totally ampirical value => might have to change
 bool black_line_detected = false;
 
 // Bluetooth software object
@@ -40,6 +42,9 @@ int Enable_B = 3;
 
 // car speed:
 int speed = 153;  // just an initial value between 0 and 255
+bool in_rest = true;
+
+#define DEG_90_DELAY 400  // in milliseconds
 
 
 // some vehicle utility functions:
@@ -50,48 +55,97 @@ void vehicle_stop(){
   digitalWrite(In_4, LOW);
   analogWrite(Enable_A, 0);
   analogWrite(Enable_B, 0);
+  in_rest = true;
 }
 
 void vehicle_move_forward(){
   digitalWrite(In_1, HIGH);
   digitalWrite(In_2, LOW);
-  digitalWrite(In_3, HIGH);
-  digitalWrite(In_4, LOW);
+  digitalWrite(In_3, LOW);
+  digitalWrite(In_4, HIGH);
   analogWrite(Enable_A, speed);
   analogWrite(Enable_B, speed);
+  in_rest = false;
 }
 
 void vehicle_move_backward(){
   digitalWrite(In_1, LOW);
   digitalWrite(In_2, HIGH);
-  digitalWrite(In_3, LOW);
-  digitalWrite(In_4, HIGH);
+  digitalWrite(In_3, HIGH);
+  digitalWrite(In_4, LOW);
   analogWrite(Enable_A, speed);
   analogWrite(Enable_B, speed);
+  in_rest = false;
 }
 
 void vehicle_turn_right(){
   digitalWrite(In_1, HIGH);
   digitalWrite(In_2, LOW);
-  digitalWrite(In_3, LOW);
-  digitalWrite(In_4, HIGH);
+  digitalWrite(In_3, HIGH);
+  digitalWrite(In_4, LOW);
   analogWrite(Enable_A, speed);
   analogWrite(Enable_B, speed);
+  in_rest = false;
 }
 
 void vehicle_turn_left(){
   digitalWrite(In_1, LOW);
   digitalWrite(In_2, HIGH);
-  digitalWrite(In_3, HIGH);
-  digitalWrite(In_4, LOW);
+  digitalWrite(In_3, LOW);
+  digitalWrite(In_4, HIGH);
   analogWrite(Enable_A, speed);
   analogWrite(Enable_B, speed);
+  in_rest = false;
+}
+
+void vehicle_turn_90_deg_left(){
+  vehicle_turn_left();
+  delay(DEG_90_DELAY);
+  vehicle_stop();
+}
+
+void vehicle_turn_90_deg_right(){
+  vehicle_turn_right();
+  delay(DEG_90_DELAY);
+  vehicle_stop();
 }
 
 void vehicle_change_speed(int new_speed){
   speed = new_speed;
-  analogWrite(Enable_A, speed);
-  analogWrite(Enable_B, speed);
+  if (!in_rest) {
+    analogWrite(Enable_A, speed);
+    analogWrite(Enable_B, speed);
+  }
+}
+
+void check_black_line(){
+  int val_right = analogRead(IR_SENSOR_RIGHT);
+  int val_left = analogRead(IR_SENSOR_LEFT);
+
+  bool black_line_detected_right = val_right > IR_THRESHOLD;
+  bool black_line_detected_left = val_left > IR_THRESHOLD;
+
+  if (black_line_detected_right) {
+    Serial.println("RIGHT: Black line / I see nothing");
+    BT.println("RIGHT: Black line / I see nothing");
+  } else {
+    Serial.println("RIGHT: Floor / IR reflecting object detected");
+    BT.println("RIGHT: Floor / IR reflecting object detected");
+  }
+  // print out the value that was read:
+  Serial.println(val_right);
+  BT.println(val_right);
+
+  if (black_line_detected_left) {
+    Serial.println("LEFT: Black line / I see nothing");
+    BT.println("LEFT: Black line / I see nothing");
+  } else {
+    Serial.println("LEFT: Floor / IR reflecting object detected");
+    BT.println("LEFT: Floor / IR reflecting object detected");
+  }
+  // print out the value that was read:
+  Serial.println(val_left);
+  BT.println(val_left);
 }
 
 void vehicle_go_to_black_line(){
@@ -111,48 +165,58 @@ void vehicle_go_to_black_line(){
 
   vehicle_move_forward(); // setting the correct direction of movement
 
-  // first of all move out of a possible current black line:
-  while (black_line_detected_right || black_line_detected_left){
-    Serial.println("-D- I'm starting to move from a black line");
-    if (black_line_detected_right){
-      analogWrite(Enable_B, speed);
-    } else {
-      analogWrite(Enable_B, 0);
+  // // first of all move out of a possible current black line:
+  // while (black_line_detected_right || black_line_detected_left){
+  //   Serial.println("-D- I'm starting to move from a black line");
+  //   BT.println("-D- I'm starting to move from a black line");
+  //   if (black_line_detected_right){
+  //     analogWrite(Enable_B, speed);
+  //   } else {
+  //     analogWrite(Enable_B, 0);
+  //   }
+  //   if (black_line_detected_left){
+  //     analogWrite(Enable_A, speed);
+  //   } else {
+  //     analogWrite(Enable_A, 0);
+  //   }
+  //
+  //   // measure again:
+  //   val_right = analogRead(IR_SENSOR_RIGHT);
+  //   val_left = analogRead(IR_SENSOR_LEFT);
+  //   black_line_detected_right = val_right > IR_THRESHOLD;
+  //   black_line_detected_left = val_left > IR_THRESHOLD;
+  // }
+  //
+  // Serial.println("-D- exited from current black line");
+  // BT.println("-D- exited from current black line");
+
+  bool left_was_stopped = false;
+  bool right_was_stopped = false;
+
+  while (!(left_was_stopped || right_was_stopped)){
+    if (!right_was_stopped){
+      if (black_line_detected_right){
+        right_was_stopped = true;
+        analogWrite(Enable_B, 0);
+      }
     }
-    if (black_line_detected_left){
-      analogWrite(Enable_A, speed);
-    } else {
-      analogWrite(Enable_A, 0);
+    if (!left_was_stopped){
+      if (black_line_detected_left){
+        left_was_stopped = true;
+        analogWrite(Enable_A, 0);
+      }
     }
 
-    // measure again:
     val_right = analogRead(IR_SENSOR_RIGHT);
     val_left = analogRead(IR_SENSOR_LEFT);
     black_line_detected_right = val_right > IR_THRESHOLD;
     black_line_detected_left = val_left > IR_THRESHOLD;
   }
 
-  Serial.println("-D- exited from current black line");
-
-  while (!(black_line_detected_right && black_line_detected_left)){
-    if (black_line_detected_right){
-      analogWrite(Enable_B, 0);
-    } else {
-      analogWrite(Enable_B, speed);
-    }
-    if (black_line_detected_left){
-      analogWrite(Enable_A, 0);
-    } else {
-      analogWrite(Enable_A, speed);
-    }
-
-    val_right = analogRead(IR_SENSOR_RIGHT);
-    val_left = analogRead(IR_SENSOR_LEFT);
-    black_line_detected_right = val_right > IR_THRESHOLD;
-    black_line_detected_left = val_left > IR_THRESHOLD;
-  }
+  vehicle_stop();
 
   Serial.println("-D- reached next black line");
+  BT.println("-D- reached next black line");
 }
 
 
@@ -178,7 +242,7 @@ void setup()
   // init the bluetooth module
   BT.begin(9600);
   // Send test message to other device
-  BT.println("Hello from Arduino");
+  BT.println("setup(): Hello from Arduino");
 }
 
 
@@ -210,33 +274,31 @@ void loop()
       BT.println("Turn Left");
     }
 
+    else if (received_chr == DEG_90_RIGHT){
+      vehicle_turn_90_deg_right();
+      BT.println("Turned 90 degrees right");
+    }
+
+    else if (received_chr == DEG_90_LEFT){
+      vehicle_turn_90_deg_left();
+      BT.println("Turned 90 degrees left");
+    }
+
     else if (received_chr == GO_TO_BLACK_LINE){
       vehicle_go_to_black_line();
       BT.println("Going to black line...");
     }
 
-    else if (received_chr == '0') {
-      vehicle_change_speed(0);
-      BT.println("Changing speed");
+    else if (received_chr == 'b') {
+      check_black_line();
+      BT.println("-D- checked black line");
     }
-    else if (received_chr == '1') {
-      vehicle_change_speed(51);
-      BT.println("Changing speed");
-    }
-    else if (received_chr == '2') {
-      vehicle_change_speed(102);
-      BT.println("Changing speed");
-    }
-    else if (received_chr == '3') {
-      vehicle_change_speed(153);
-      BT.println("Changing speed");
-    }
-    else if (received_chr == '4') {
-      vehicle_change_speed(204);
-      BT.println("Changing speed");
-    }
-    else if (received_chr == '5') {
-      vehicle_change_speed(255);
+
+    else if (isDigit(received_chr)) {
+      String digit_str = "";
+      digit_str += (char)received_chr;
+      int digit_int = digit_str.toInt();
+      vehicle_change_speed(digit_int * 28);  // 9 * 28 = 252 < 255 which is ok
       BT.println("Changing speed");
     }
     else {
@@ -247,25 +309,5 @@ void loop()
 
   // delay(300);
   //
-  // int val_right = analogRead(IR_SENSOR_RIGHT);
-  // int val_left = analogRead(IR_SENSOR_LEFT);
-  //
-  // bool black_line_detected_right = val_right > IR_THRESHOLD;
-  // bool black_line_detected_left = val_left > IR_THRESHOLD;
-  //
-  // if (black_line_detected_right) {
-  //   Serial.println("RIGHT: Black line / I see nothing");
-  // } else {
-  //   Serial.println("RIGHT: Floor / IR reflecting object detected");
-  // }
-  // // print out the value that was read:
-  // Serial.println(val_right);
-  //
-  // if (black_line_detected_left) {
-  //   Serial.println("LEFT: Black line / I see nothing");
-  // } else {
-  //   Serial.println("LEFT: Floor / IR reflecting object detected");
-  // }
-  // // print out the value that was read:
-  // Serial.println(val_left);
+
 }
