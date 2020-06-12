@@ -44,7 +44,7 @@ int Enable_B = 3;
 int speed = 153;  // just an initial value between 0 and 255
 bool in_rest = true;
 
-#define DEG_90_DELAY 400  // in milliseconds
+#define DEG_90_DELAY 880  // in milliseconds - completely ampirical value
 
 
 // some vehicle utility functions:
