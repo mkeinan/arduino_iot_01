@@ -22,10 +22,16 @@
 #define BLUETOOTH_RX 13
 #define BLUETOOTH_TX 12
 
+// ultrasonic sensor pins
+#define TRIG 10
+#define ECHO 11
+
 const int IR_SENSOR_LEFT = A1;
 const int IR_SENSOR_RIGHT = A0;
 const int IR_THRESHOLD = 650;  // Totally ampirical value => might have to change
 bool black_line_detected = false;
+
+const int OBSTACLE_DIST_THRESHOLD = 18;
 
 // Bluetooth software object
 SoftwareSerial BT(BLUETOOTH_TX, BLUETOOTH_RX);
@@ -46,6 +52,27 @@ bool in_rest = true;
 
 #define DEG_90_DELAY 880  // in milliseconds - completely ampirical value
 
+
+// measure the distance (in cm) using the ultrasonic light sensor:
+long measure_distance(){
+   digitalWrite(TRIG, LOW);
+   delayMicroseconds(5);
+   digitalWrite(TRIG, HIGH);
+   delayMicroseconds(10);
+   digitalWrite(TRIG, LOW);
+   long duration = pulseIn(ECHO, HIGH);
+   long dist_in_cm = (duration * 0.0343) / 2;
+   return dist_in_cm;
+}
+
+// check if there's an obstacle right ahead:
+bool is_obstacle_in_front(){
+  long dist = measure_distance();
+  BT.print("-D- measured distance to object in front: ");
+  BT.print(dist);
+  BT.println(" [cm]");
+  return dist < OBSTACLE_DIST_THRESHOLD;
+}
 
 // some vehicle utility functions:
 void vehicle_stop(){
@@ -149,6 +176,15 @@ void check_black_line(){
 }
 
 void vehicle_go_to_black_line(){
+
+  // don't go if you see an obstacle:
+  if (is_obstacle_in_front()){
+    Serial.println("-D- can't move forward, obstacle is in the way");
+    BT.println("-D can't move forward, obstacle is in the way");
+    vehicle_stop();
+    return;
+  }
+
   // TODO: note that if the speed is 0 or too low we will get stuck!
 
   int val_right = analogRead(IR_SENSOR_RIGHT);
@@ -230,6 +266,8 @@ void setup()
   pinMode(In_3, OUTPUT);
   pinMode(In_4, OUTPUT);
   pinMode(Enable_B, OUTPUT);
+  pinMode(TRIG, OUTPUT);
+  pinMode(ECHO, INPUT);
 
   // initialize the vehicle in "STOP" mode:
   vehicle_stop();
@@ -292,6 +330,22 @@ void loop()
     else if (received_chr == 'b') {
       check_black_line();
       BT.println("-D- checked black line");
+    }
+
+    else if (received_chr == 't'){
+      long dist = measure_distance();
+      BT.print("-D- measured distance: ");
+      BT.print(dist);
+      BT.println(" [cm]");
+    }
+
+    else if (received_chr == 'y'){
+      bool is_obstacle = is_obstacle_in_front();
+      if (is_obstacle){
+        BT.println("obstacle detected!");
+      } else {
+        BT.println("path is clear");
+      }
     }
 
     else if (isDigit(received_chr)) {
