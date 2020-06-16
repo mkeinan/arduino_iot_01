@@ -68,9 +68,9 @@ long measure_distance(){
 // check if there's an obstacle right ahead:
 bool is_obstacle_in_front(){
   long dist = measure_distance();
-  BT.print("-D- measured distance to object in front: ");
-  BT.print(dist);
-  BT.println(" [cm]");
+  // BT.print("-D- measured distance to object in front: ");
+  // BT.print(dist);
+  // BT.println(" [cm]");
   return dist < OBSTACLE_DIST_THRESHOLD;
 }
 
@@ -180,7 +180,8 @@ void vehicle_go_to_black_line(){
   // don't go if you see an obstacle:
   if (is_obstacle_in_front()){
     Serial.println("-D- can't move forward, obstacle is in the way");
-    BT.println("-D can't move forward, obstacle is in the way");
+    // BT.println("-D can't move forward, obstacle is in the way");
+    BT.println("n");
     vehicle_stop();
     return;
   }
@@ -252,7 +253,8 @@ void vehicle_go_to_black_line(){
   vehicle_stop();
 
   Serial.println("-D- reached next black line");
-  BT.println("-D- reached next black line");
+  BT.println("y");
+  // BT.println("-D- reached next black line");
 }
 
 
@@ -314,17 +316,20 @@ void loop()
 
     else if (received_chr == DEG_90_RIGHT){
       vehicle_turn_90_deg_right();
-      BT.println("Turned 90 degrees right");
+      // BT.println("Turned 90 degrees right");
+      BT.println("y");
     }
 
     else if (received_chr == DEG_90_LEFT){
       vehicle_turn_90_deg_left();
-      BT.println("Turned 90 degrees left");
+      // BT.println("Turned 90 degrees left");
+      BT.println("y");
     }
 
     else if (received_chr == GO_TO_BLACK_LINE){
       vehicle_go_to_black_line();
-      BT.println("Going to black line...");
+      // BT.println("Going to black line...");
+      // BT.println("y");
     }
 
     else if (received_chr == 'b') {
