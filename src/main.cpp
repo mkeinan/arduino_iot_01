@@ -33,6 +33,8 @@ bool black_line_detected = false;
 
 const int OBSTACLE_DIST_THRESHOLD = 12;  // in centimeters
 
+const int LED_PIN = 8;
+
 // Bluetooth software object
 SoftwareSerial BT(BLUETOOTH_TX, BLUETOOTH_RX);
 // BT input char:
@@ -274,6 +276,14 @@ void vehicle_go_to_black_line(){
   // BT.println("-D- reached next black line");
 }
 
+void turn_on_leds(){
+   digitalWrite(LED_PIN, HIGH);
+}
+
+void turn_off_leds(){
+   digitalWrite(LED_PIN, LOW);
+}
+
 
 // Arduino Setup
 void setup()
@@ -287,6 +297,7 @@ void setup()
   pinMode(Enable_B, OUTPUT);
   pinMode(TRIG, OUTPUT);
   pinMode(ECHO, INPUT);
+  pinMode(LED_PIN, OUTPUT);
 
   // initialize the vehicle in "STOP" mode:
   vehicle_stop();
@@ -389,7 +400,9 @@ void loop()
     }
   }
 
+ turn_on_leds();
  delay(3500);  // TODO: remove or decrease, this is just for debug purpose
+ turn_off_leds();
   // delay(300);
   //
 
