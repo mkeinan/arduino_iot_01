@@ -13,9 +13,9 @@
 #define MOVE_BACKWARD 'x'
 #define TURN_LEFT 'a'
 #define TURN_RIGHT 'd'
-#define GO_TO_BLACK_LINE 'g'
-#define DEG_90_RIGHT 'e'
-#define DEG_90_LEFT 'q'
+#define GO_TO_BLACK_LINE 'G'
+#define DEG_90_RIGHT 'R'
+#define DEG_90_LEFT 'L'
 
 // Bluetooth pins
 // #define LED_BUILTIN 13
@@ -47,10 +47,12 @@ int In_4 = 2;
 int Enable_B = 3;
 
 // car speed:
-int speed = 153;  // just an initial value between 0 and 255
+#define HIGH_SPEED 200
+#define LOW_SPEED 102
+int speed = 102;  // just an initial value between 0 and 255
 bool in_rest = true;
 
-#define DEG_90_DELAY 880  // in milliseconds - completely ampirical value
+#define DEG_90_DELAY 550  // in milliseconds - completely ampirical value
 
 
 // measure the distance (in cm) using the ultrasonic light sensor:
@@ -181,7 +183,7 @@ void vehicle_go_to_black_line(){
   if (is_obstacle_in_front()){
     Serial.println("-D- can't move forward, obstacle is in the way");
     // BT.println("-D can't move forward, obstacle is in the way");
-    BT.println("n");
+    BT.println("1");
     vehicle_stop();
     return;
   }
@@ -253,7 +255,7 @@ void vehicle_go_to_black_line(){
   vehicle_stop();
 
   Serial.println("-D- reached next black line");
-  BT.println("y");
+  BT.println("0");
   // BT.println("-D- reached next black line");
 }
 
@@ -315,15 +317,19 @@ void loop()
     }
 
     else if (received_chr == DEG_90_RIGHT){
+      vehicle_change_speed(HIGH_SPEED);
       vehicle_turn_90_deg_right();
       // BT.println("Turned 90 degrees right");
-      BT.println("y");
+      BT.println("0");
+      vehicle_change_speed(LOW_SPEED);
     }
 
     else if (received_chr == DEG_90_LEFT){
+      vehicle_change_speed(HIGH_SPEED);
       vehicle_turn_90_deg_left();
       // BT.println("Turned 90 degrees left");
-      BT.println("y");
+      BT.println("0");
+      vehicle_change_speed(LOW_SPEED);
     }
 
     else if (received_chr == GO_TO_BLACK_LINE){
@@ -366,6 +372,7 @@ void loop()
     }
   }
 
+ delay(3500);  // TODO: remove or decrease, this is just for debug purpose
   // delay(300);
   //
 
