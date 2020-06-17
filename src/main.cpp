@@ -47,12 +47,12 @@ int In_4 = 2;
 int Enable_B = 3;
 
 // car speed:
-#define HIGH_SPEED 200
-#define LOW_SPEED 102
-int speed = 102;  // just an initial value between 0 and 255
+#define HIGH_SPEED 220
+#define LOW_SPEED 170
+int speed = 170;  // just an initial value between 0 and 255
 bool in_rest = true;
 
-#define DEG_90_DELAY 550  // in milliseconds - completely ampirical value
+#define DEG_90_DELAY 300  // in milliseconds - completely ampirical value
 
 
 // measure the distance (in cm) using the ultrasonic light sensor:
@@ -180,7 +180,7 @@ void check_black_line(){
 void vehicle_go_to_black_line(){
 
   // don't go if you see an obstacle:
-  if (is_obstacle_in_front()){
+  if (is_obstacle_in_front() && false){  // TODO: remove debug statement
     Serial.println("-D- can't move forward, obstacle is in the way");
     // BT.println("-D can't move forward, obstacle is in the way");
     BT.println("1");
