@@ -31,7 +31,7 @@ const int IR_SENSOR_RIGHT = A0;
 const int IR_THRESHOLD = 650;  // Totally ampirical value => might have to change
 bool black_line_detected = false;
 
-const int OBSTACLE_DIST_THRESHOLD = 18;
+const int OBSTACLE_DIST_THRESHOLD = 12;  // in centimeters
 
 // Bluetooth software object
 SoftwareSerial BT(BLUETOOTH_TX, BLUETOOTH_RX);
@@ -57,6 +57,7 @@ bool in_rest = true;
 
 // measure the distance (in cm) using the ultrasonic light sensor:
 long measure_distance(){
+  Serial.println("-D- measuring distance...");
    digitalWrite(TRIG, LOW);
    delayMicroseconds(5);
    digitalWrite(TRIG, HIGH);
@@ -64,6 +65,8 @@ long measure_distance(){
    digitalWrite(TRIG, LOW);
    long duration = pulseIn(ECHO, HIGH);
    long dist_in_cm = (duration * 0.0343) / 2;
+   Serial.print("measure_distance(): measured ");
+   Serial.println(dist_in_cm);
    return dist_in_cm;
 }
 
@@ -73,7 +76,17 @@ bool is_obstacle_in_front(){
   // BT.print("-D- measured distance to object in front: ");
   // BT.print(dist);
   // BT.println(" [cm]");
-  return dist < OBSTACLE_DIST_THRESHOLD;
+  bool ans = dist < OBSTACLE_DIST_THRESHOLD;
+  Serial.print("is_obstacle_in_front(): measured ");
+  Serial.print(dist);
+  Serial.print(" centimeters to object in front");
+  Serial.print("  =>> ");
+  if (ans){
+    Serial.println("OBSTACLE DETECTED!");
+  } else {
+    Serial.println("PATH IS CLEAR");
+  }
+  return ans;
 }
 
 // some vehicle utility functions:
@@ -180,11 +193,11 @@ void check_black_line(){
 void vehicle_go_to_black_line(){
 
   // don't go if you see an obstacle:
-  if (is_obstacle_in_front() && false){  // TODO: remove debug statement
-    Serial.println("-D- can't move forward, obstacle is in the way");
+  if (is_obstacle_in_front()){  // TODO: remove debug statement
+    Serial.println("-W- can't move forward, obstacle is in the way");
     // BT.println("-D can't move forward, obstacle is in the way");
-    BT.println("1");
     vehicle_stop();
+    BT.print("1");   // OBSTACLE
     return;
   }
 
@@ -235,12 +248,14 @@ void vehicle_go_to_black_line(){
   while (!(left_was_stopped || right_was_stopped)){
     if (!right_was_stopped){
       if (black_line_detected_right){
+        Serial.println("-D- black line detected on the right");
         right_was_stopped = true;
         analogWrite(Enable_B, 0);
       }
     }
     if (!left_was_stopped){
       if (black_line_detected_left){
+        Serial.println("-D- black line detected on the left");
         left_was_stopped = true;
         analogWrite(Enable_A, 0);
       }
@@ -252,10 +267,10 @@ void vehicle_go_to_black_line(){
     black_line_detected_left = val_left > IR_THRESHOLD;
   }
 
-  vehicle_stop();
+  vehicle_stop();   // stop both tracks
 
-  Serial.println("-D- reached next black line");
-  BT.println("0");
+  Serial.println("-I- reached next black line");
+  BT.print("0");
   // BT.println("-D- reached next black line");
 }
 
@@ -284,7 +299,7 @@ void setup()
   // init the bluetooth module
   BT.begin(9600);
   // Send test message to other device
-  BT.println("setup(): Hello from Arduino");
+  Serial.println("setup(): Hello from Arduino");
 }
 
 
@@ -295,6 +310,8 @@ void loop()
   // if text arrived in from BT serial...
   {
     received_chr = BT.read();
+    Serial.print("Received char = ");
+    Serial.println(received_chr);
     if (received_chr == STOP) {
       vehicle_stop();
       BT.println("Stop");
@@ -320,16 +337,16 @@ void loop()
       vehicle_change_speed(HIGH_SPEED);
       vehicle_turn_90_deg_right();
       // BT.println("Turned 90 degrees right");
-      BT.println("0");
       vehicle_change_speed(LOW_SPEED);
+      BT.print("0");  // SUCCESS
     }
 
     else if (received_chr == DEG_90_LEFT){
       vehicle_change_speed(HIGH_SPEED);
       vehicle_turn_90_deg_left();
       // BT.println("Turned 90 degrees left");
-      BT.println("0");
       vehicle_change_speed(LOW_SPEED);
+      BT.print("0");  // SUCCESS
     }
 
     else if (received_chr == GO_TO_BLACK_LINE){
