@@ -28,7 +28,7 @@
 
 const int IR_SENSOR_LEFT = A1;
 const int IR_SENSOR_RIGHT = A0;
-const int IR_THRESHOLD = 650;  // Totally ampirical value => might have to change
+const int IR_THRESHOLD = 250;  // Totally ampirical value => might have to change
 bool black_line_detected = false;
 
 const int OBSTACLE_DIST_THRESHOLD = 12;  // in centimeters
@@ -49,12 +49,12 @@ int In_4 = 2;
 int Enable_B = 3;
 
 // car speed:
-#define HIGH_SPEED 220
-#define LOW_SPEED 170
-int speed = 170;  // just an initial value between 0 and 255
+#define HIGH_SPEED 160
+#define LOW_SPEED 110
+int speed = 110;  // just an initial value between 0 and 255
 bool in_rest = true;
 
-#define DEG_90_DELAY 300  // in milliseconds - completely ampirical value
+#define DEG_90_DELAY 500  // in milliseconds - completely ampirical value
 
 
 // measure the distance (in cm) using the ultrasonic light sensor:
@@ -103,20 +103,28 @@ void vehicle_stop(){
 }
 
 void vehicle_move_forward(){
-  digitalWrite(In_1, HIGH);
-  digitalWrite(In_2, LOW);
-  digitalWrite(In_3, LOW);
-  digitalWrite(In_4, HIGH);
+  // digitalWrite(In_1, HIGH);
+  // digitalWrite(In_2, LOW);
+  // digitalWrite(In_3, LOW);
+  // digitalWrite(In_4, HIGH);
+  digitalWrite(In_1, LOW);
+  digitalWrite(In_2, HIGH);
+  digitalWrite(In_3, HIGH);
+  digitalWrite(In_4, LOW);
   analogWrite(Enable_A, speed);
   analogWrite(Enable_B, speed);
   in_rest = false;
 }
 
 void vehicle_move_backward(){
-  digitalWrite(In_1, LOW);
-  digitalWrite(In_2, HIGH);
-  digitalWrite(In_3, HIGH);
-  digitalWrite(In_4, LOW);
+  // digitalWrite(In_1, LOW);
+  // digitalWrite(In_2, HIGH);
+  // digitalWrite(In_3, HIGH);
+  // digitalWrite(In_4, LOW);
+  digitalWrite(In_1, HIGH);
+  digitalWrite(In_2, LOW);
+  digitalWrite(In_3, LOW);
+  digitalWrite(In_4, HIGH);
   analogWrite(Enable_A, speed);
   analogWrite(Enable_B, speed);
   in_rest = false;
@@ -190,6 +198,30 @@ void check_black_line(){
   // print out the value that was read:
   Serial.println(val_left);
   BT.println(val_left);
+}
+
+void check_right_black_line_sensor(){
+  int val_right = analogRead(IR_SENSOR_RIGHT);
+  bool black_line_detected_right = val_right > IR_THRESHOLD;
+  Serial.print("right sensor = ");
+  Serial.print(val_right);
+  if (black_line_detected_right) {
+    Serial.println("  => Black line / nothing");
+  } else {
+    Serial.println("  => Floor / IR reflecting object");
+  }
+}
+
+void check_left_black_line_sensor(){
+  int val_left = analogRead(IR_SENSOR_LEFT);
+  bool black_line_detected_left = val_left > IR_THRESHOLD;
+  Serial.print("left sensor = ");
+  Serial.print(val_left);
+  if (black_line_detected_left) {
+    Serial.println("  => Black line / nothing");
+  } else {
+    Serial.println("  => Floor / IR reflecting object");
+  }
 }
 
 void vehicle_go_to_black_line(){
@@ -317,6 +349,13 @@ void setup()
 
 void loop()
 {
+
+  // check_right_black_line_sensor();
+  // check_left_black_line_sensor();
+  // delay(200);
+  // return;
+
+
   if (BT.available())
   // if text arrived in from BT serial...
   {
@@ -401,7 +440,7 @@ void loop()
   }
 
  turn_on_leds();
- delay(3500);  // TODO: remove or decrease, this is just for debug purpose
+ delay(2500);  // TODO: remove or decrease, this is just for debug purpose
  turn_off_leds();
   // delay(300);
   //
