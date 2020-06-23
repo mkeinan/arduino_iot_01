@@ -54,7 +54,7 @@ int Enable_B = 3;
 int speed = 100;  // just an initial value between 0 and 255
 bool in_rest = true;
 
-#define DEG_90_DELAY 900  // in milliseconds - completely ampirical value
+#define DEG_90_DELAY 820  // in milliseconds - completely ampirical value
 
 
 // measure the distance (in cm) using the ultrasonic light sensor:
@@ -235,12 +235,14 @@ void align_on_black_line(){
 
   while (true){
     if (black_line_detected_right && black_line_detected_left){
+      vehicle_change_speed(LOW_SPEED);
       return;
     }
 
     if (black_line_detected_right && !black_line_detected_left){
       if (before != 1) {
         before = 1;
+        vehicle_change_speed(HIGH_SPEED);
         vehicle_turn_right();
         continue;
       }
@@ -249,6 +251,7 @@ void align_on_black_line(){
     if (!black_line_detected_right && black_line_detected_left){
       if (before != 2) {
         before = 2;
+        vehicle_change_speed(HIGH_SPEED);
         vehicle_turn_left();
         continue;
       }
@@ -257,6 +260,7 @@ void align_on_black_line(){
     if (!black_line_detected_right && !black_line_detected_left){
       if (before != 3) {
         before = 3;
+        vehicle_change_speed(LOW_SPEED);
         vehicle_move_forward();
         continue;
       }
