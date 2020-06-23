@@ -49,12 +49,12 @@ int In_4 = 2;
 int Enable_B = 3;
 
 // car speed:
-#define HIGH_SPEED 160
-#define LOW_SPEED 110
-int speed = 110;  // just an initial value between 0 and 255
+#define HIGH_SPEED 140
+#define LOW_SPEED 100
+int speed = 100;  // just an initial value between 0 and 255
 bool in_rest = true;
 
-#define DEG_90_DELAY 500  // in milliseconds - completely ampirical value
+#define DEG_90_DELAY 900  // in milliseconds - completely ampirical value
 
 
 // measure the distance (in cm) using the ultrasonic light sensor:
@@ -224,6 +224,52 @@ void check_left_black_line_sensor(){
   }
 }
 
+void align_on_black_line(){
+  int val_right = analogRead(IR_SENSOR_RIGHT);
+  int val_left = analogRead(IR_SENSOR_LEFT);
+
+  bool black_line_detected_right = val_right > IR_THRESHOLD;
+  bool black_line_detected_left = val_left > IR_THRESHOLD;
+
+  int before = 0;
+
+  while (true){
+    if (black_line_detected_right && black_line_detected_left){
+      return;
+    }
+
+    if (black_line_detected_right && !black_line_detected_left){
+      if (before != 1) {
+        before = 1;
+        vehicle_turn_right();
+        continue;
+      }
+    }
+
+    if (!black_line_detected_right && black_line_detected_left){
+      if (before != 2) {
+        before = 2;
+        vehicle_turn_left();
+        continue;
+      }
+    }
+
+    if (!black_line_detected_right && !black_line_detected_left){
+      if (before != 3) {
+        before = 3;
+        vehicle_move_forward();
+        continue;
+      }
+    }
+
+    val_right = analogRead(IR_SENSOR_RIGHT);
+    val_left = analogRead(IR_SENSOR_LEFT);
+
+    black_line_detected_right = val_right > IR_THRESHOLD;
+    black_line_detected_left = val_left > IR_THRESHOLD;
+  }
+}
+
 void vehicle_go_to_black_line(){
 
   // don't go if you see an obstacle:
@@ -299,6 +345,8 @@ void vehicle_go_to_black_line(){
     val_left = analogRead(IR_SENSOR_LEFT);
     black_line_detected_right = val_right > IR_THRESHOLD;
     black_line_detected_left = val_left > IR_THRESHOLD;
+
+    align_on_black_line();
   }
 
   vehicle_stop();   // stop both tracks
