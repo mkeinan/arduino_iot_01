@@ -55,6 +55,8 @@ int speed = 100;  // just an initial value between 0 and 255
 bool in_rest = true;
 
 #define DEG_90_DELAY 820  // in milliseconds - completely ampirical value
+#define REVERSE_BACKOFF_DELAY 200
+#define FORWARD_KICKOFF_DELAY 150
 
 
 // measure the distance (in cm) using the ultrasonic light sensor:
@@ -360,6 +362,30 @@ void vehicle_go_to_black_line(){
   // BT.println("-D- reached next black line");
 }
 
+
+void vehicle_go_two_black_lines_forward(){
+  align_on_black_line();
+
+  if (is_obstacle_in_front()){  // TODO: remove debug statement
+    Serial.println("-W- can't move forward, obstacle is in the way");
+    // BT.println("-D can't move forward, obstacle is in the way");
+    vehicle_move_backward();
+    delay(REVERSE_BACKOFF_DELAY);
+    vehicle_stop();
+    BT.print("1");   // OBSTACLE
+    return;
+  }
+
+  vehicle_move_forward();
+  delay(FORWARD_KICKOFF_DELAY);
+  align_on_black_line();
+  vehicle_move_backward();
+  delay(REVERSE_BACKOFF_DELAY);
+  vehicle_stop();
+  BT.print("0");   // SUCCESS
+}
+
+
 void turn_on_leds(){
    digitalWrite(LED_PIN, HIGH);
 }
@@ -452,7 +478,8 @@ void loop()
     }
 
     else if (received_chr == GO_TO_BLACK_LINE){
-      vehicle_go_to_black_line();
+      // vehicle_go_to_black_line();
+      vehicle_go_two_black_lines_forward();
       // BT.println("Going to black line...");
       // BT.println("y");
     }
