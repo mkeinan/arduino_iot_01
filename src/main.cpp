@@ -31,7 +31,7 @@ const int IR_SENSOR_RIGHT = A0;
 const int IR_THRESHOLD = 250;  // Totally ampirical value => might have to change
 bool black_line_detected = false;
 
-const int OBSTACLE_DIST_THRESHOLD = 12;  // in centimeters
+const int OBSTACLE_DIST_THRESHOLD = 20;  // in centimeters
 
 const int LED_PIN = 8;
 
@@ -49,14 +49,15 @@ int In_4 = 2;
 int Enable_B = 3;
 
 // car speed:
-#define HIGH_SPEED 140
-#define LOW_SPEED 100
-int speed = 100;  // just an initial value between 0 and 255
+#define HIGH_SPEED 160
+#define LOW_SPEED 90
+int speed = LOW_SPEED;  // just an initial value between 0 and 255
 bool in_rest = true;
 
-#define DEG_90_DELAY 820  // in milliseconds - completely ampirical value
-#define REVERSE_BACKOFF_DELAY 200
-#define FORWARD_KICKOFF_DELAY 150
+#define DELAY_BETWEEN_COMMANDS 1000
+#define DEG_90_DELAY 530  // in milliseconds - completely ampirical value
+#define REVERSE_BACKOFF_DELAY 250
+#define FORWARD_KICKOFF_DELAY 350
 
 
 // measure the distance (in cm) using the ultrasonic light sensor:
@@ -237,7 +238,9 @@ void align_on_black_line(){
 
   while (true){
     if (black_line_detected_right && black_line_detected_left){
+      vehicle_stop();
       vehicle_change_speed(LOW_SPEED);
+      vehicle_stop();
       return;
     }
 
@@ -519,7 +522,7 @@ void loop()
   }
 
  turn_on_leds();
- delay(2500);  // TODO: remove or decrease, this is just for debug purpose
+ delay(DELAY_BETWEEN_COMMANDS);  // TODO: remove or decrease, this is just for debug purpose
  turn_off_leds();
   // delay(300);
   //
