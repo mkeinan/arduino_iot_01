@@ -83,11 +83,11 @@ int Enable_B = 3;
 
 // car speed:
 #define HIGH_SPEED 160
-#define LOW_SPEED 90
+#define LOW_SPEED 110
 int speed = LOW_SPEED;  // just an initial value between 0 and 255
 bool in_rest = true;
 
-#define DELAY_BETWEEN_COMMANDS 1000
+#define DELAY_BETWEEN_COMMANDS 3500
 #define DEG_90_DELAY 530  // in milliseconds - completely ampirical value
 #define REVERSE_BACKOFF_DELAY 250
 #define FORWARD_KICKOFF_DELAY 350
@@ -275,7 +275,17 @@ void vehicle_turn_90_deg_left(){
   while (curColor != nextColor){
     curColor = detect_color();
   }
+  delay(40);
   vehicle_stop();
+  // small correction in case the rotation was too strong:
+  curColor = detect_color();
+  if (curColor != nextColor){
+    vehicle_turn_right();
+    while (curColor != nextColor){
+      curColor = detect_color();
+    }
+    vehicle_stop();
+  }
   lastColor = curColor;
 }
 
@@ -290,7 +300,17 @@ void vehicle_turn_90_deg_right(){
   while (curColor != nextColor){
     curColor = detect_color();
   }
+  delay(40);
   vehicle_stop();
+  // small correction in case the rotation was too strong:
+  curColor = detect_color();
+  if (curColor != nextColor){
+    vehicle_turn_left();
+    while (curColor != nextColor){
+      curColor = detect_color();
+    }
+    vehicle_stop();
+  }
   lastColor = curColor;
 }
 
@@ -601,11 +621,15 @@ void loop()
       BT.println("Reverse");
     }
     else if (received_chr == TURN_RIGHT) {
+      vehicle_change_speed(HIGH_SPEED);
       vehicle_turn_right();
+      vehicle_change_speed(LOW_SPEED);
       BT.println("Turn Right");
     }
     else if (received_chr == TURN_LEFT) {
+      vehicle_change_speed(HIGH_SPEED);
       vehicle_turn_left();
+      vehicle_change_speed(LOW_SPEED);
       BT.println("Turn Left");
     }
 
