@@ -95,6 +95,8 @@ bool in_rest = true;
 #define COLOR_ALIGN_DELAY_INTERVAL 2
 #define COLOR_ALIGN_DELAY_SWITCH_DIR 150
 
+#define BLACK_LINE_ALIGN_REPEATS 4
+
 int direction_flipper = 0;   // 0 or 1
 
 // forward declarations:
@@ -548,6 +550,12 @@ void vehicle_go_two_black_lines_forward(){
     delay(REVERSE_BACKOFF_DELAY);
     vehicle_stop();
   }
+  for (int i=0; i<BLACK_LINE_ALIGN_REPEATS; i++){
+    align_on_black_line();
+    vehicle_move_backward();
+    delay(REVERSE_BACKOFF_DELAY);
+    vehicle_stop();
+  }
 
   if (is_obstacle_in_front()){  // TODO: remove debug statement
     Serial.println("-W- can't move forward, obstacle is in the way");
@@ -566,9 +574,15 @@ void vehicle_go_two_black_lines_forward(){
     delay(REVERSE_BACKOFF_DELAY);
     vehicle_stop();
   }
-  vehicle_move_backward();
-  delay(REVERSE_BACKOFF_DELAY);
-  vehicle_stop();
+  for (int i=0; i<BLACK_LINE_ALIGN_REPEATS; i++){
+    align_on_black_line();
+    vehicle_move_backward();
+    delay(REVERSE_BACKOFF_DELAY);
+    vehicle_stop();
+  }
+  // vehicle_move_backward();
+  // delay(REVERSE_BACKOFF_DELAY);
+  // vehicle_stop();
   BT.print("0");   // SUCCESS
 }
 
@@ -623,20 +637,29 @@ void align_both_color_and_black_line(){
     delay(REVERSE_BACKOFF_DELAY);
     vehicle_stop();
   }
-  vehicle_move_backward();
-  delay(REVERSE_BACKOFF_DELAY);
-  vehicle_stop();
-  while (!align_on_current_color()){
-    // a change was made to align on the color, so let's align on the black line again...
-    while (!align_on_black_line()){
-      vehicle_move_backward();
-      delay(REVERSE_BACKOFF_DELAY);
-      vehicle_stop();
-    }
+  for (int i=0; i<BLACK_LINE_ALIGN_REPEATS; i++){
+    align_on_black_line();
     vehicle_move_backward();
     delay(REVERSE_BACKOFF_DELAY);
     vehicle_stop();
   }
+  // vehicle_move_backward();
+  // delay(REVERSE_BACKOFF_DELAY);
+  // vehicle_stop();
+
+  // the following does really bad stuff:
+
+  // while (!align_on_current_color()){
+  //   // a change was made to align on the color, so let's align on the black line again...
+  //   while (!align_on_black_line()){
+  //     vehicle_move_backward();
+  //     delay(REVERSE_BACKOFF_DELAY);
+  //     vehicle_stop();
+  //   }
+  //   vehicle_move_backward();
+  //   delay(REVERSE_BACKOFF_DELAY);
+  //   vehicle_stop();
+  // }
 }
 
 
