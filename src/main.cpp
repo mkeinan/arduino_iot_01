@@ -275,17 +275,23 @@ void vehicle_turn_90_deg_left(){
   while (curColor != nextColor){
     curColor = detect_color();
   }
-  delay(40);
+  delay(30);
   vehicle_stop();
   // small correction in case the rotation was too strong:
+  // go to the floor (past the color):
   curColor = detect_color();
-  if (curColor != nextColor){
-    vehicle_turn_right();
-    while (curColor != nextColor){
-      curColor = detect_color();
-    }
-    vehicle_stop();
+  vehicle_turn_left();
+  while (curColor == nextColor){
+    curColor = detect_color();
   }
+  vehicle_stop();
+  // go from the floor to the color:
+  curColor = detect_color();
+  vehicle_turn_right();
+  while (curColor == FLOOR){
+    curColor = detect_color();
+  }
+  vehicle_stop();
   lastColor = curColor;
 }
 
@@ -300,17 +306,23 @@ void vehicle_turn_90_deg_right(){
   while (curColor != nextColor){
     curColor = detect_color();
   }
-  delay(40);
+  delay(30);
   vehicle_stop();
   // small correction in case the rotation was too strong:
+  // go to the floor (past the color):
   curColor = detect_color();
-  if (curColor != nextColor){
-    vehicle_turn_left();
-    while (curColor != nextColor){
-      curColor = detect_color();
-    }
-    vehicle_stop();
+  vehicle_turn_right();
+  while (curColor == nextColor){
+    curColor = detect_color();
   }
+  vehicle_stop();
+  // go from the floor to the color:
+  curColor = detect_color();
+  vehicle_turn_left();
+  while (curColor == FLOOR){
+    curColor = detect_color();
+  }
+  vehicle_stop();
   lastColor = curColor;
 }
 
