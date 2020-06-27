@@ -89,12 +89,17 @@ bool in_rest = true;
 
 #define DELAY_BETWEEN_COMMANDS 3500
 #define DEG_90_DELAY 530  // in milliseconds - completely ampirical value
-#define REVERSE_BACKOFF_DELAY 250
+#define REVERSE_BACKOFF_DELAY 300
 #define FORWARD_KICKOFF_DELAY 350
 
+#define COLOR_ALIGN_DELAY_INTERVAL 2
+#define COLOR_ALIGN_DELAY_SWITCH_DIR 150
+
+int direction_flipper = 0;   // 0 or 1
 
 // forward declarations:
-void align_on_black_line();
+bool align_on_black_line();
+void align_both_color_and_black_line();
 
 
 int detect_color(){
@@ -282,12 +287,11 @@ void vehicle_turn_90_deg_left(){
   delay(30);
   vehicle_stop();
   // small correction in case the rotation was too strong:
-  align_on_black_line();
-  vehicle_move_backward();
-  delay(REVERSE_BACKOFF_DELAY);
+  lastColor = curColor;
+  vehicle_stop();
+  align_both_color_and_black_line();
 
   vehicle_stop();
-  lastColor = curColor;
 }
 
 void vehicle_turn_90_deg_right(){
@@ -304,12 +308,11 @@ void vehicle_turn_90_deg_right(){
   delay(30);
   vehicle_stop();
   // small correction in case the rotation was too strong:
-  align_on_black_line();
-  vehicle_move_backward();
-  delay(REVERSE_BACKOFF_DELAY);
+  lastColor = curColor;
+  vehicle_stop();
+  align_both_color_and_black_line();
 
   vehicle_stop();
-  lastColor = curColor;
 }
 
 void vehicle_change_speed(int new_speed){
@@ -374,12 +377,15 @@ void check_left_black_line_sensor(){
   }
 }
 
-void align_on_black_line(){
+bool align_on_black_line(){
   int val_right = analogRead(IR_SENSOR_RIGHT);
   int val_left = analogRead(IR_SENSOR_LEFT);
 
   bool black_line_detected_right = val_right > IR_THRESHOLD;
   bool black_line_detected_left = val_left > IR_THRESHOLD;
+
+  bool black_line_once_detected_right = false || black_line_detected_right;
+  bool black_line_once_detected_left = false || black_line_detected_left;
 
   int before = 0;
   int on_black_line_count = 0;
@@ -390,9 +396,17 @@ void align_on_black_line(){
       vehicle_change_speed(LOW_SPEED);
       vehicle_stop();
       if (on_black_line_count > 10){
-          return;
+          return true;
       } else {
         on_black_line_count++;
+        val_right = analogRead(IR_SENSOR_RIGHT);
+        val_left = analogRead(IR_SENSOR_LEFT);
+
+        black_line_detected_right = val_right > IR_THRESHOLD;
+        black_line_detected_left = val_left > IR_THRESHOLD;
+
+        black_line_once_detected_right = false || black_line_detected_right;
+        black_line_once_detected_left = false || black_line_detected_left;
         continue;
       }
     }
@@ -417,6 +431,11 @@ void align_on_black_line(){
     }
 
     if (!black_line_detected_right && !black_line_detected_left){
+      if (black_line_once_detected_right && black_line_once_detected_left){
+        vehicle_change_speed(LOW_SPEED);
+        vehicle_stop();
+        return false;
+      }
       if (before != 3) {
         before = 3;
         vehicle_change_speed(LOW_SPEED);
@@ -430,6 +449,9 @@ void align_on_black_line(){
 
     black_line_detected_right = val_right > IR_THRESHOLD;
     black_line_detected_left = val_left > IR_THRESHOLD;
+
+    black_line_once_detected_right = false || black_line_detected_right;
+    black_line_once_detected_left = false || black_line_detected_left;
   }
 }
 
@@ -521,7 +543,11 @@ void vehicle_go_to_black_line(){
 
 
 void vehicle_go_two_black_lines_forward(){
-  align_on_black_line();
+  while (!align_on_black_line()){
+    vehicle_move_backward();
+    delay(REVERSE_BACKOFF_DELAY);
+    vehicle_stop();
+  }
 
   if (is_obstacle_in_front()){  // TODO: remove debug statement
     Serial.println("-W- can't move forward, obstacle is in the way");
@@ -535,7 +561,11 @@ void vehicle_go_two_black_lines_forward(){
 
   vehicle_move_forward();
   delay(FORWARD_KICKOFF_DELAY);
-  align_on_black_line();
+  while (!align_on_black_line()){
+    vehicle_move_backward();
+    delay(REVERSE_BACKOFF_DELAY);
+    vehicle_stop();
+  }
   vehicle_move_backward();
   delay(REVERSE_BACKOFF_DELAY);
   vehicle_stop();
@@ -550,6 +580,65 @@ void turn_on_leds(){
 void turn_off_leds(){
    digitalWrite(LED_PIN, LOW);
 }
+
+
+bool align_on_current_color(){
+  int my_color = detect_color();
+  if (my_color == lastColor){
+    return true;  // no correction was needed
+  }
+  vehicle_change_speed(HIGH_SPEED);
+  vehicle_turn_left();
+  int total_delay = 0;
+  while (my_color != lastColor && total_delay < (2 - direction_flipper) * COLOR_ALIGN_DELAY_SWITCH_DIR){
+    delay(COLOR_ALIGN_DELAY_INTERVAL);
+    my_color = detect_color();
+    total_delay += COLOR_ALIGN_DELAY_INTERVAL;
+  }
+  vehicle_stop();
+  direction_flipper = (direction_flipper + 1) % 2;
+  if (my_color == lastColor){
+    vehicle_change_speed(LOW_SPEED);
+    return false;
+  }
+  vehicle_turn_right();
+  total_delay = 0;
+  while (my_color != lastColor && total_delay < (2 - direction_flipper) * COLOR_ALIGN_DELAY_SWITCH_DIR){
+    delay(COLOR_ALIGN_DELAY_INTERVAL);
+    my_color = detect_color();
+    total_delay += COLOR_ALIGN_DELAY_INTERVAL;
+  }
+  if (my_color == lastColor){
+    vehicle_change_speed(LOW_SPEED);
+    return false;
+  }
+  vehicle_change_speed(LOW_SPEED);
+  return false; // a non normal situation has occurred.
+}
+
+
+void align_both_color_and_black_line(){
+  while (!align_on_black_line()){
+    vehicle_move_backward();
+    delay(REVERSE_BACKOFF_DELAY);
+    vehicle_stop();
+  }
+  vehicle_move_backward();
+  delay(REVERSE_BACKOFF_DELAY);
+  vehicle_stop();
+  while (!align_on_current_color()){
+    // a change was made to align on the color, so let's align on the black line again...
+    while (!align_on_black_line()){
+      vehicle_move_backward();
+      delay(REVERSE_BACKOFF_DELAY);
+      vehicle_stop();
+    }
+    vehicle_move_backward();
+    delay(REVERSE_BACKOFF_DELAY);
+    vehicle_stop();
+  }
+}
+
 
 // Arduino Setup
 void setup()
