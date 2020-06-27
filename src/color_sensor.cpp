@@ -54,7 +54,7 @@ void loop() {
    // Printing the RED (R) value
   Serial.print("R = ");
   Serial.print(redColor);
-  delay(100);
+  // delay(100);
 
   // Setting GREEN (G) filtered photodiodes to be read
   digitalWrite(S2, HIGH);
@@ -68,7 +68,7 @@ void loop() {
   // Printing the GREEN (G) value
   Serial.print(" G = ");
   Serial.print(greenColor);
-  delay(100);
+  // delay(100);
 
   // Setting BLUE (B) filtered photodiodes to be read
   digitalWrite(S2,LOW);
@@ -82,7 +82,7 @@ void loop() {
   // Printing the BLUE (B) value
   Serial.print(" B = ");
   Serial.println(blueColor);
-  delay(100);
+  // delay(100);
 
   // Checks the current detected color and prints
   // a message in the serial monitor
@@ -95,4 +95,6 @@ void loop() {
   if(blueColor > redColor && blueColor > greenColor){
     Serial.println(" - BLUE detected!");
   }
+
+  delay(400);
 }
