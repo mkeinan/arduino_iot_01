@@ -90,12 +90,12 @@ bool in_rest = true;
 #define DELAY_BETWEEN_COMMANDS 3500
 #define DEG_90_DELAY 530  // in milliseconds - completely ampirical value
 #define REVERSE_BACKOFF_DELAY 300
-#define FORWARD_KICKOFF_DELAY 350
+#define FORWARD_KICKOFF_DELAY 600
 
 #define COLOR_ALIGN_DELAY_INTERVAL 2
 #define COLOR_ALIGN_DELAY_SWITCH_DIR 150
 
-#define BLACK_LINE_ALIGN_REPEATS 4
+#define BLACK_LINE_ALIGN_REPEATS 5
 
 int direction_flipper = 0;   // 0 or 1
 
