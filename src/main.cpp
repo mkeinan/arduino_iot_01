@@ -83,7 +83,7 @@ int Enable_B = 3;
 
 // car speed:
 #define HIGH_SPEED 160
-#define LOW_SPEED 110
+#define LOW_SPEED 100
 int speed = LOW_SPEED;  // just an initial value between 0 and 255
 bool in_rest = true;
 
@@ -91,6 +91,10 @@ bool in_rest = true;
 #define DEG_90_DELAY 530  // in milliseconds - completely ampirical value
 #define REVERSE_BACKOFF_DELAY 250
 #define FORWARD_KICKOFF_DELAY 350
+
+
+// forward declarations:
+void align_on_black_line();
 
 
 int detect_color(){
@@ -278,19 +282,10 @@ void vehicle_turn_90_deg_left(){
   delay(30);
   vehicle_stop();
   // small correction in case the rotation was too strong:
-  // go to the floor (past the color):
-  curColor = detect_color();
-  vehicle_turn_left();
-  while (curColor == nextColor){
-    curColor = detect_color();
-  }
-  vehicle_stop();
-  // go from the floor to the color:
-  curColor = detect_color();
-  vehicle_turn_right();
-  while (curColor == FLOOR){
-    curColor = detect_color();
-  }
+  align_on_black_line();
+  vehicle_move_backward();
+  delay(REVERSE_BACKOFF_DELAY);
+
   vehicle_stop();
   lastColor = curColor;
 }
@@ -309,19 +304,10 @@ void vehicle_turn_90_deg_right(){
   delay(30);
   vehicle_stop();
   // small correction in case the rotation was too strong:
-  // go to the floor (past the color):
-  curColor = detect_color();
-  vehicle_turn_right();
-  while (curColor == nextColor){
-    curColor = detect_color();
-  }
-  vehicle_stop();
-  // go from the floor to the color:
-  curColor = detect_color();
-  vehicle_turn_left();
-  while (curColor == FLOOR){
-    curColor = detect_color();
-  }
+  align_on_black_line();
+  vehicle_move_backward();
+  delay(REVERSE_BACKOFF_DELAY);
+
   vehicle_stop();
   lastColor = curColor;
 }
@@ -396,14 +382,21 @@ void align_on_black_line(){
   bool black_line_detected_left = val_left > IR_THRESHOLD;
 
   int before = 0;
+  int on_black_line_count = 0;
 
   while (true){
     if (black_line_detected_right && black_line_detected_left){
       vehicle_stop();
       vehicle_change_speed(LOW_SPEED);
       vehicle_stop();
-      return;
+      if (on_black_line_count > 10){
+          return;
+      } else {
+        on_black_line_count++;
+        continue;
+      }
     }
+    on_black_line_count = 0;
 
     if (black_line_detected_right && !black_line_detected_left){
       if (before != 1) {
