@@ -82,20 +82,23 @@ int In_4 = 2;
 int Enable_B = 3;
 
 // car speed:
-#define HIGH_SPEED 160
-#define LOW_SPEED 100
+#define HIGH_SPEED 150
+#define LOW_SPEED 90
 int speed = LOW_SPEED;  // just an initial value between 0 and 255
 bool in_rest = true;
 
-#define DELAY_BETWEEN_COMMANDS 3500
+#define DELAY_BETWEEN_COMMANDS 1000
 #define DEG_90_DELAY 530  // in milliseconds - completely ampirical value
-#define REVERSE_BACKOFF_DELAY 300
+#define REVERSE_BACKOFF_DELAY 350
 #define FORWARD_KICKOFF_DELAY 600
 
 #define COLOR_ALIGN_DELAY_INTERVAL 2
 #define COLOR_ALIGN_DELAY_SWITCH_DIR 150
 
-#define BLACK_LINE_ALIGN_REPEATS 5
+#define BLACK_LINE_ALIGN_REPEATS 4
+#define POST_TURN_TO_COLOR_DELAY 120
+
+#define ALIGNMENT_DELAY 40
 
 int direction_flipper = 0;   // 0 or 1
 
@@ -286,7 +289,7 @@ void vehicle_turn_90_deg_left(){
   while (curColor != nextColor){
     curColor = detect_color();
   }
-  delay(30);
+  delay(POST_TURN_TO_COLOR_DELAY);
   vehicle_stop();
   // small correction in case the rotation was too strong:
   lastColor = curColor;
@@ -307,7 +310,7 @@ void vehicle_turn_90_deg_right(){
   while (curColor != nextColor){
     curColor = detect_color();
   }
-  delay(30);
+  delay(POST_TURN_TO_COLOR_DELAY);
   vehicle_stop();
   // small correction in case the rotation was too strong:
   lastColor = curColor;
@@ -419,6 +422,7 @@ bool align_on_black_line(){
         before = 1;
         vehicle_change_speed(HIGH_SPEED);
         vehicle_turn_right();
+        delay(ALIGNMENT_DELAY);
         continue;
       }
     }
@@ -428,6 +432,7 @@ bool align_on_black_line(){
         before = 2;
         vehicle_change_speed(HIGH_SPEED);
         vehicle_turn_left();
+        delay(ALIGNMENT_DELAY);
         continue;
       }
     }
@@ -545,6 +550,16 @@ void vehicle_go_to_black_line(){
 
 
 void vehicle_go_two_black_lines_forward(){
+  if (is_obstacle_in_front()){  // TODO: remove debug statement
+    Serial.println("-W- can't move forward, obstacle is in the way");
+    // BT.println("-D can't move forward, obstacle is in the way");
+    vehicle_move_backward();
+    delay(REVERSE_BACKOFF_DELAY);
+    vehicle_stop();
+    BT.print("1");   // OBSTACLE
+    return;
+  }
+
   while (!align_on_black_line()){
     vehicle_move_backward();
     delay(REVERSE_BACKOFF_DELAY);
@@ -555,16 +570,6 @@ void vehicle_go_two_black_lines_forward(){
     vehicle_move_backward();
     delay(REVERSE_BACKOFF_DELAY);
     vehicle_stop();
-  }
-
-  if (is_obstacle_in_front()){  // TODO: remove debug statement
-    Serial.println("-W- can't move forward, obstacle is in the way");
-    // BT.println("-D can't move forward, obstacle is in the way");
-    vehicle_move_backward();
-    delay(REVERSE_BACKOFF_DELAY);
-    vehicle_stop();
-    BT.print("1");   // OBSTACLE
-    return;
   }
 
   vehicle_move_forward();
@@ -632,6 +637,10 @@ bool align_on_current_color(){
 
 
 void align_both_color_and_black_line(){
+  vehicle_change_speed(LOW_SPEED);
+  vehicle_move_backward();
+  delay(REVERSE_BACKOFF_DELAY);
+  vehicle_stop();
   while (!align_on_black_line()){
     vehicle_move_backward();
     delay(REVERSE_BACKOFF_DELAY);
@@ -825,6 +834,18 @@ void loop()
 
  turn_on_leds();
  delay(DELAY_BETWEEN_COMMANDS);  // TODO: remove or decrease, this is just for debug purpose
+ turn_off_leds();
+ delay(100);
+ turn_on_leds();
+ delay(100);
+ turn_off_leds();
+ delay(120);
+ turn_on_leds();
+ delay(120);
+ turn_off_leds();
+ delay(160);
+ turn_on_leds();
+ delay(160);
  turn_off_leds();
   // delay(300);
   //
