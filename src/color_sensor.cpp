@@ -1,3 +1,4 @@
+/*
 #include <arduino.h>
 
 // TCS230 or TCS3200 pins wiring to Arduino
@@ -98,3 +99,4 @@ void loop() {
 
   delay(400);
 }
+*/

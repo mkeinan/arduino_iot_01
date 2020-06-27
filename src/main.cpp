@@ -1,5 +1,5 @@
 
-/*
+
 // A Trial to control the vehicle using Bluetooth.
 
 
@@ -16,6 +16,39 @@
 #define GO_TO_BLACK_LINE 'G'
 #define DEG_90_RIGHT 'R'
 #define DEG_90_LEFT 'L'
+
+// TCS230 or TCS3200 pins wiring to Arduino
+#define S0 A4
+#define S1 A2
+#define S2 A3
+#define S3 A5
+#define colorSensor 9
+
+#define RED_HIGH_FREQ 100
+#define RED_LOW_FREQ 21
+#define GREEN_HIGH_FREQ 90
+#define GREEN_LOW_FREQ 30
+#define BLUE_HIGH_FREQ 90
+#define BLUE_LOW_FREQ 30
+
+#define RED 555
+#define GREEN 666
+#define BLUE 777
+#define FLOOR 999
+
+#define FLOOR_OR_COLOR_THRESHOLD 0.6
+
+// Stores frequency read by the photodiodes
+int redFrequency = 0;
+int greenFrequency = 0;
+int blueFrequency = 0;
+
+// Stores the red. green and blue colors
+int redColor = 0;
+int greenColor = 0;
+int blueColor = 0;
+
+int lastColor = RED;
 
 // Bluetooth pins
 // #define LED_BUILTIN 13
@@ -58,6 +91,84 @@ bool in_rest = true;
 #define DEG_90_DELAY 530  // in milliseconds - completely ampirical value
 #define REVERSE_BACKOFF_DELAY 250
 #define FORWARD_KICKOFF_DELAY 350
+
+
+int detect_color(){
+  digitalWrite(S2, LOW);
+  digitalWrite(S3, LOW);
+
+  // Reading the output frequency
+  redFrequency = pulseIn(colorSensor, LOW);
+  // Remaping the value of the RED (R) frequency from 0 to 255
+  redColor = map(redFrequency, RED_LOW_FREQ, RED_HIGH_FREQ, 255, 0);
+
+   // Printing the RED (R) value
+  Serial.print("R = ");
+  Serial.print(redColor);
+
+  // Setting GREEN (G) filtered photodiodes to be read
+  digitalWrite(S2, HIGH);
+  digitalWrite(S3, HIGH);
+
+  // Reading the output frequency
+  greenFrequency = pulseIn(colorSensor, LOW);
+  // Remaping the value of the GREEN (G) frequency from 0 to 255
+  greenColor = map(greenFrequency, GREEN_LOW_FREQ, GREEN_HIGH_FREQ, 255, 0);
+
+  // Printing the GREEN (G) value
+  Serial.print(" G = ");
+  Serial.print(greenColor);
+
+  // Setting BLUE (B) filtered photodiodes to be read
+  digitalWrite(S2,LOW);
+  digitalWrite(S3,HIGH);
+
+  // Reading the output frequency
+  blueFrequency = pulseIn(colorSensor, LOW);
+  // Remaping the value of the BLUE (B) frequency from 0 to 255
+  blueColor = map(blueFrequency, BLUE_LOW_FREQ, BLUE_HIGH_FREQ, 255, 0);
+
+  // Printing the BLUE (B) value
+  Serial.print(" B = ");
+  Serial.println(blueColor);
+
+  bool is_color = false;
+  is_color = is_color || ((double)redColor / greenColor < FLOOR_OR_COLOR_THRESHOLD);
+  is_color = is_color || ((double)redColor / blueColor < FLOOR_OR_COLOR_THRESHOLD);
+  is_color = is_color || ((double)greenColor / redColor < FLOOR_OR_COLOR_THRESHOLD);
+  is_color = is_color || ((double)greenColor / blueColor < FLOOR_OR_COLOR_THRESHOLD);
+  is_color = is_color || ((double)blueColor / redColor < FLOOR_OR_COLOR_THRESHOLD);
+  is_color = is_color || ((double)blueColor / greenColor < FLOOR_OR_COLOR_THRESHOLD);
+  if (!is_color){
+    Serial.println("detect_color() => FLOOR");
+    return FLOOR;
+  } else {
+    if (redColor > greenColor){
+      Serial.println("detect_color() => RED");
+      return RED;
+    } else {
+      if (redColor < blueColor){
+        Serial.println("detect_color() => BLUE");
+        return BLUE;
+      } else {
+        Serial.println("detect_color() => GREEN");
+        return GREEN;  // this should not happen...
+      }
+    }
+  }
+
+  // // Checks the current detected color and prints
+  // // a message in the serial monitor
+  // if(redColor > greenColor && redColor > blueColor){
+  //     Serial.println(" - RED detected!");
+  // }
+  // if(greenColor > redColor && greenColor > blueColor){
+  //   Serial.println(" - GREEN detected!");
+  // }
+  // if(blueColor > redColor && blueColor > greenColor){
+  //   Serial.println(" - BLUE detected!");
+  // }
+}
 
 
 // measure the distance (in cm) using the ultrasonic light sensor:
@@ -155,14 +266,32 @@ void vehicle_turn_left(){
 
 void vehicle_turn_90_deg_left(){
   vehicle_turn_left();
-  delay(DEG_90_DELAY);
+  // stop the rotation when the appropriate color is reached:
+  int nextColor = RED;
+  if (lastColor == RED){
+    nextColor = BLUE;
+  }
+  int curColor = detect_color();
+  while (curColor != nextColor){
+    curColor = detect_color();
+  }
   vehicle_stop();
+  lastColor = curColor;
 }
 
 void vehicle_turn_90_deg_right(){
   vehicle_turn_right();
-  delay(DEG_90_DELAY);
+  // stop the rotation when the appropriate color is reached:
+  int nextColor = RED;
+  if (lastColor == RED){
+    nextColor = BLUE;
+  }
+  int curColor = detect_color();
+  while (curColor != nextColor){
+    curColor = detect_color();
+  }
   vehicle_stop();
+  lastColor = curColor;
 }
 
 void vehicle_change_speed(int new_speed){
@@ -397,7 +526,6 @@ void turn_off_leds(){
    digitalWrite(LED_PIN, LOW);
 }
 
-
 // Arduino Setup
 void setup()
 {
@@ -417,6 +545,23 @@ void setup()
 
   pinMode(IR_SENSOR_RIGHT, INPUT);
   pinMode(IR_SENSOR_LEFT, INPUT);
+
+  // color sensor related output pins:
+  pinMode(S0, OUTPUT);
+  pinMode(S1, OUTPUT);
+  pinMode(S2, OUTPUT);
+  pinMode(S3, OUTPUT);
+
+  // Setting the colorSensor as an input
+  pinMode(colorSensor, INPUT);
+
+  // Setting frequency scaling of colors to 20%
+  digitalWrite(S0, HIGH);
+  digitalWrite(S1, LOW);
+
+  // reset the lastColor variable:
+  lastColor = RED;
+
   // initialize serial communication at 9600 bits per second:
   Serial.begin(9600);
 
@@ -508,6 +653,22 @@ void loop()
       }
     }
 
+    else if (received_chr == 'c'){
+      int ans = detect_color();
+      if (ans == FLOOR){
+        BT.println("FLOOR");
+      }
+      if (ans == RED){
+        BT.println("RED");
+      }
+      if (ans == GREEN){
+        BT.println("GREEN");
+      }
+      if (ans == BLUE){
+        BT.println("BLUE");
+      }
+    }
+
     else if (isDigit(received_chr)) {
       String digit_str = "";
       digit_str += (char)received_chr;
@@ -528,4 +689,3 @@ void loop()
   //
 
 }
-*/
