@@ -82,21 +82,21 @@ int In_4 = 2;
 int Enable_B = 3;
 
 // car speed:
-#define HIGH_SPEED 150
-#define LOW_SPEED 90
+#define HIGH_SPEED 160
+#define LOW_SPEED 120
 int speed = LOW_SPEED;  // just an initial value between 0 and 255
 bool in_rest = true;
 
-#define DELAY_BETWEEN_COMMANDS 1000
+#define DELAY_BETWEEN_COMMANDS 1500
 #define DEG_90_DELAY 530  // in milliseconds - completely ampirical value
-#define REVERSE_BACKOFF_DELAY 350
-#define FORWARD_KICKOFF_DELAY 600
+#define REVERSE_BACKOFF_DELAY 250
+#define FORWARD_KICKOFF_DELAY 500
 
 #define COLOR_ALIGN_DELAY_INTERVAL 2
 #define COLOR_ALIGN_DELAY_SWITCH_DIR 150
 
-#define BLACK_LINE_ALIGN_REPEATS 4
-#define POST_TURN_TO_COLOR_DELAY 120
+#define BLACK_LINE_ALIGN_REPEATS 0
+#define POST_TURN_TO_COLOR_DELAY 80
 
 #define ALIGNMENT_DELAY 40
 
@@ -276,6 +276,18 @@ void vehicle_turn_left(){
   analogWrite(Enable_A, speed);
   analogWrite(Enable_B, speed);
   in_rest = false;
+}
+
+void vehicle_turn_90_deg_left_by_delay(){
+  vehicle_turn_left();
+  delay(DEG_90_DELAY);
+  vehicle_stop();
+}
+
+void vehicle_turn_90_deg_right_by_delay(){
+  vehicle_turn_right();
+  delay(DEG_90_DELAY);
+  vehicle_stop();
 }
 
 void vehicle_turn_90_deg_left(){
@@ -761,7 +773,7 @@ void loop()
 
     else if (received_chr == DEG_90_RIGHT){
       vehicle_change_speed(HIGH_SPEED);
-      vehicle_turn_90_deg_right();
+      vehicle_turn_90_deg_right_by_delay();
       // BT.println("Turned 90 degrees right");
       vehicle_change_speed(LOW_SPEED);
       BT.print("0");  // SUCCESS
@@ -769,7 +781,7 @@ void loop()
 
     else if (received_chr == DEG_90_LEFT){
       vehicle_change_speed(HIGH_SPEED);
-      vehicle_turn_90_deg_left();
+      vehicle_turn_90_deg_left_by_delay();
       // BT.println("Turned 90 degrees left");
       vehicle_change_speed(LOW_SPEED);
       BT.print("0");  // SUCCESS
