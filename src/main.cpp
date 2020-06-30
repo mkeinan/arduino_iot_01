@@ -88,14 +88,14 @@ int speed = LOW_SPEED;  // just an initial value between 0 and 255
 bool in_rest = true;
 
 #define DELAY_BETWEEN_COMMANDS 1500
-#define DEG_90_DELAY 530  // in milliseconds - completely ampirical value
+#define DEG_90_DELAY 700  // in milliseconds - completely ampirical value
 #define REVERSE_BACKOFF_DELAY 250
 #define FORWARD_KICKOFF_DELAY 500
 
 #define COLOR_ALIGN_DELAY_INTERVAL 2
 #define COLOR_ALIGN_DELAY_SWITCH_DIR 150
 
-#define BLACK_LINE_ALIGN_REPEATS 0
+#define BLACK_LINE_ALIGN_REPEATS 1
 #define POST_TURN_TO_COLOR_DELAY 80
 
 #define ALIGNMENT_DELAY 40
@@ -282,11 +282,19 @@ void vehicle_turn_90_deg_left_by_delay(){
   vehicle_turn_left();
   delay(DEG_90_DELAY);
   vehicle_stop();
+  align_on_black_line();
+  vehicle_move_backward();
+  delay(REVERSE_BACKOFF_DELAY);
+  vehicle_stop();
 }
 
 void vehicle_turn_90_deg_right_by_delay(){
   vehicle_turn_right();
   delay(DEG_90_DELAY);
+  vehicle_stop();
+  align_on_black_line();
+  vehicle_move_backward();
+  delay(REVERSE_BACKOFF_DELAY);
   vehicle_stop();
 }
 
