@@ -90,7 +90,7 @@ bool in_rest = true;
 #define DELAY_BETWEEN_COMMANDS 1500
 #define DEG_90_DELAY 700  // in milliseconds - completely ampirical value
 #define REVERSE_BACKOFF_DELAY 250
-#define MINOR_REVERSE_BACKOFF_DELAY 150
+#define MINOR_REVERSE_BACKOFF_DELAY 100
 #define FORWARD_KICKOFF_DELAY 500
 
 #define COLOR_ALIGN_DELAY_INTERVAL 2
