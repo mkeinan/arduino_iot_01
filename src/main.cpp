@@ -232,10 +232,6 @@ void vehicle_stop(){
 }
 
 void vehicle_move_forward(){
-  // digitalWrite(In_1, HIGH);
-  // digitalWrite(In_2, LOW);
-  // digitalWrite(In_3, LOW);
-  // digitalWrite(In_4, HIGH);
   digitalWrite(In_1, LOW);
   digitalWrite(In_2, HIGH);
   digitalWrite(In_3, HIGH);
@@ -246,10 +242,6 @@ void vehicle_move_forward(){
 }
 
 void vehicle_move_backward(){
-  // digitalWrite(In_1, LOW);
-  // digitalWrite(In_2, HIGH);
-  // digitalWrite(In_3, HIGH);
-  // digitalWrite(In_4, LOW);
   digitalWrite(In_1, HIGH);
   digitalWrite(In_2, LOW);
   digitalWrite(In_3, LOW);
@@ -508,38 +500,7 @@ void vehicle_go_to_black_line(){
   bool black_line_detected_right = val_right > IR_THRESHOLD;
   bool black_line_detected_left = val_left > IR_THRESHOLD;
 
-  // int left_track_enable = speed;
-  // int right_track_enable = speed;
-  //
-  // bool left_trigger = false;  // true means stop immediately when black line detected.
-  // bool right_trigger = false;  // true means stop immediately when black line detected.
-
   vehicle_move_forward(); // setting the correct direction of movement
-
-  // // first of all move out of a possible current black line:
-  // while (black_line_detected_right || black_line_detected_left){
-  //   Serial.println("-D- I'm starting to move from a black line");
-  //   BT.println("-D- I'm starting to move from a black line");
-  //   if (black_line_detected_right){
-  //     analogWrite(Enable_B, speed);
-  //   } else {
-  //     analogWrite(Enable_B, 0);
-  //   }
-  //   if (black_line_detected_left){
-  //     analogWrite(Enable_A, speed);
-  //   } else {
-  //     analogWrite(Enable_A, 0);
-  //   }
-  //
-  //   // measure again:
-  //   val_right = analogRead(IR_SENSOR_RIGHT);
-  //   val_left = analogRead(IR_SENSOR_LEFT);
-  //   black_line_detected_right = val_right > IR_THRESHOLD;
-  //   black_line_detected_left = val_left > IR_THRESHOLD;
-  // }
-  //
-  // Serial.println("-D- exited from current black line");
-  // BT.println("-D- exited from current black line");
 
   bool left_was_stopped = false;
   bool right_was_stopped = false;
