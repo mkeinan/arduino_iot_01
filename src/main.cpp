@@ -89,7 +89,7 @@ bool in_rest = true;
 
 #define DELAY_BETWEEN_COMMANDS 1500
 #define DEG_90_DELAY 700  // in milliseconds - completely ampirical value
-#define REVERSE_BACKOFF_DELAY 250
+#define REVERSE_BACKOFF_DELAY 200
 #define MINOR_REVERSE_BACKOFF_DELAY 100
 #define FORWARD_KICKOFF_DELAY 500
 
@@ -275,9 +275,9 @@ void vehicle_turn_90_deg_left_by_delay(){
   vehicle_turn_left();
   delay(DEG_90_DELAY);
   vehicle_stop();
-  vehicle_move_backward();
-  delay(MINOR_REVERSE_BACKOFF_DELAY);
-  vehicle_stop();
+  // vehicle_move_backward();
+  // delay(MINOR_REVERSE_BACKOFF_DELAY);
+  // vehicle_stop();
   align_on_black_line();
   vehicle_move_backward();
   delay(REVERSE_BACKOFF_DELAY);
@@ -288,9 +288,9 @@ void vehicle_turn_90_deg_right_by_delay(){
   vehicle_turn_right();
   delay(DEG_90_DELAY);
   vehicle_stop();
-  vehicle_move_backward();
-  delay(MINOR_REVERSE_BACKOFF_DELAY);
-  vehicle_stop();
+  // vehicle_move_backward();
+  // delay(MINOR_REVERSE_BACKOFF_DELAY);
+  // vehicle_stop();
   align_on_black_line();
   vehicle_move_backward();
   delay(REVERSE_BACKOFF_DELAY);
