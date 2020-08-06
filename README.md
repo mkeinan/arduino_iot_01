@@ -1,2 +1,2 @@
 # arduino_iot_01
-An example code repository for the arduino IOT project
+Code repository for the arduino code in Technion IOT project
